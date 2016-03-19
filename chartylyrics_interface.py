@@ -10,9 +10,11 @@ class ChartLyricsInterface(object):
     def __api_call(self, command, argnames, args):
         assert len(argnames) == len(args), 'Number of argnames must match number of args'
         url = self.prefix_url + command + '?' + self.__format_query(argnames, args)
-        print url
-        r = requests.get(url)
-        return r.text if r else None
+        try:
+            r = requests.get(url)
+            return r.text if r else None
+        except:
+            return None
 
     def __format_query(self, argnames, args):
         args = [arg.lower().strip().replace(' ', '%20') for arg in args]
@@ -24,7 +26,9 @@ class ChartLyricsInterface(object):
 
     def search_lyric_direct(self, artist, song):
         xml = self.__api_call('SearchLyricDirect', ['artist', 'song'], [artist, song])
-        root = ET.fromstring(xml)
+        if xml is None:
+            return None
+        root = ET.fromstring(xml.encode('utf-8'))
         return root[-1].text
 
     def search_lyric_text(self, lyricText):
