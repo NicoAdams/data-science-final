@@ -4,7 +4,8 @@ from chartylyrics_interface import ChartLyricsInterface
 
 def main():
     interface = ChartLyricsInterface()
-    csv_reader = csv.reader(open('200s_123songs.csv','rb'))
+    # csv_reader = csv.reader(open('200s_123songs.csv','rb'))
+    csv_reader = csv.reader(open('songs_500.csv','rb'))
     next(csv_reader, None)
     dictionary = {}
     for song, artist in csv_reader:

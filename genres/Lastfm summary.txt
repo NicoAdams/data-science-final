@@ -1,0 +1,31 @@
+Last.fm: Summary
+
+-- Data quality --
+
+All tags are user generated. This can result in significant errors in identification. For example, "Believe" by Cher was released in 1998 and was tagged as both "90s" and "80s". Tags...
+	- Are inconsistent:
+		"female vocalist" vs "female vocalists"
+		"1990s" vs "Essential 90s"
+	- Refer to very different category types: (Examples from "Believe" by Cher)
+		Genre - "pop" ,"dance"
+		Time period - "1990s"
+		Sentiment - "guilty pleasure", "songs i should hate but secretly like"
+		Technology - "vocoder", "electronic"
+		Commercial success - "top 40"
+		Totally random - "best", "Like this", "All of the songs", "my music"
+
+-- Cool features --
+
+Tags are categorized by number of people who have tagged the song, giving an easy way to test tag credibility.
+
+Tags have long-form descriptions that can be looked up:
+	"disco" - Disco is a genre of dance-oriented music that originated in African American, gay and Hispanic American communities in 1970s...
+
+Tags have "similar tags" that can be used to establish relationships
+
+Track lookup has autocorrect:
+	"guns and roses", "Mrbrownstone" - "Guns N' Roses", "Mr. Brownstone"
+
+-- API issues --
+
+The API seems to have some bugs. Many tag lookup functions, like "tag.getInfo" and "tag.getSimilar", return "ok" statuses but no data.
