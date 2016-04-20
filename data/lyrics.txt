@@ -1,0 +1,8 @@
+Format:
+[
+	{
+		"uid": "--unique id number--",
+		"lyrics": "--lyrics--"
+	},
+	...
+]

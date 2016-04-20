@@ -1,0 +1,8 @@
+Format:
+[
+	{
+		"uid": "--unique id number--",
+		"genres": ["--genre 1--", "--genre 2--", ...]
+	},
+	...
+]
