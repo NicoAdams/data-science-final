@@ -1,0 +1,5 @@
+Format:
+{
+	"--unique id number--": "--lyrics--"
+	...
+}

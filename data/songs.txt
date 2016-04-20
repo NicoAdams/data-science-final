@@ -1,0 +1,10 @@
+Format:
+{
+	"--unique id number--":
+	{
+		"title": "--title--",
+		"artist": "--artist--",
+		"album": "--album--"
+	},
+	...
+}
