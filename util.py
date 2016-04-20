@@ -1,9 +1,9 @@
 # General utility code
 
 def levenshtein(s1, s2):
-	""" Implementation of Levenshtein edit distance
-	Lifted from https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
-	"""
+    """ Implementation of Levenshtein edit distance
+    Lifted from https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
+    """
     if len(s1) < len(s2):
         return levenshtein(s2, s1)
     
@@ -23,4 +23,4 @@ def levenshtein(s1, s2):
     
     return previous_row[-1]
 
-	
+    
