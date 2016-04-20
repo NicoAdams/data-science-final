@@ -1,5 +1,5 @@
 Format:
-[
-	"uid": ["--genre 1--", "--genre 2--", ...],
+{
+	"--unique id number--": ["--genre 1--", "--genre 2--", ...],
 	...
-]
+}

@@ -1,5 +1,5 @@
 Format:
-[
+{
 	"--unique id number--": "--year--",
 	...
-]
+}
