@@ -1,8 +1,5 @@
 Format:
 [
-	{
-		"uid": "--unique id number--",
-		"year": "--year--"
-	},
+	"--unique id number--": "--year--",
 	...
 ]

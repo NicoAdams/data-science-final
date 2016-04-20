@@ -1,8 +1,5 @@
 Format:
-[
-	{
-		"uid": "--unique id number--",
-		"lyrics": "--lyrics--"
-	},
+{
+	"--unique id number--": "--lyrics--"
 	...
-]
+}

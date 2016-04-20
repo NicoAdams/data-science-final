@@ -1,7 +1,7 @@
 Format:
 [
+	"--unique id number--":
 	{
-		"uid": "--unique id number--",
 		"title": "--title--",
 		"artist": "--artist--",
 		"album": "--album--"
