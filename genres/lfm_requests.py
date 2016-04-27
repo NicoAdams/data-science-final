@@ -7,6 +7,8 @@ sys.path.append(parentdir)
 import requests
 import xml_parse
 import json
+import time
+import util
 
 # Configuration data for Last.FM requests
 apiKey = "5da947c52b1de7e8daff6141a97a3af7"
@@ -82,14 +84,13 @@ def getGenres(tags):
 	# map(lambda s: s.strip(), genresMaster)
 	for i in range(len(genresMaster)):
 		genresMaster[i] = genresMaster[i].strip()
+	genresMaster = set(genresMaster)
 	
 	genres = []
 	for tag in tags:
-		tag['name'] = tag['name'].lower()
-		for genre in genresMaster:
-			if tag['name'] == genre:
-				genres.append(tag)
-				break
+		tagname = tag['name'].lower()
+		if tagname in genresMaster:
+			genres.append(tagname)
 	return genres
 
 def getSignificantTags(topTagsTree):
@@ -110,11 +111,11 @@ def requestSignificantTags(trackName, artistName):
 
 # -- Data compiling --
 
-def requestGenresFromSong(songInfo):
+def requestGenresFromSong(trackName, artistName):
 	""" Requests a song's tags from its info dictionary
 	songInfo: A dictionary with fields "title" and "artist"
 	"""
-	tags = requestSignificantTags(songInfo['title'], songInfo['artist'])
+	tags = requestSignificantTags(trackName, artistName)
 	return getGenres(tags)
 
 def generateGenreData(songsFile, genresFile):
@@ -122,11 +123,42 @@ def generateGenreData(songsFile, genresFile):
 	"""
 	songsFileData = json.load(open(songsFile))
 	
-	currGenreData = json.load(open(genresFile))
-	
-	genreData = {}
-	for songID in songsFileData:
-		songInfo = songsFileData[songID]
-		genres = requestGenresFromSong(songInfo)
-		genreData[songID] = genres
-	
+	genreData = json.load(open(genresFile))
+	# try:
+	print "Beginning"
+	count = 0
+	try:
+		for songID in songsFileData:
+			count += 1
+			
+			if songID in genreData:
+				continue
+			
+			songInfo = songsFileData[songID]
+			title = songInfo["title"]
+			artist = songInfo["artist"]
+			
+			effTitle = title
+			for possibleTitle in util.possibleNames(title):
+				
+				effTitle = possibleTitle
+				
+				genres = requestGenresFromSong(possibleTitle, artist)
+				if len(genres) > 0:
+					break
+			
+			genreData[songID] = genres
+			
+			print 
+			print "--", count, "--"
+			print title
+			print effTitle
+			print genres
+			
+			time.sleep(0.2)
+	finally:
+		with open(genresFile, "w+") as f:
+			f.write(json.dumps(genreData))
+
+if __name__ == "__main__":
+	generateGenreData("../data/songs.txt", "../data/genres.txt")

@@ -47,7 +47,8 @@ def possibleNames(name):
     nameComponents = [name]
     nameComponents = splitListOn(nameComponents, " (")
     nameComponents = splitListOn(nameComponents, " - ")
+    nameComponents = splitListOn(nameComponents, " [")
     possibleNames = []
-    for i in range(len(nameComponents), 0, -1):
+    for i in range(1, len(nameComponents)+1):
         possibleNames.append("".join(nameComponents[:i]))
     return possibleNames
