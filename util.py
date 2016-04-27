@@ -23,4 +23,31 @@ def levenshtein(s1, s2):
     
     return previous_row[-1]
 
+def splitListOn(l, splitString):
+    """ Splits each string in a list, then joins all results into a single list
+    Eg. ["a:b", "c:d"], ":" -> ["a", ":b", "c", ":d"]
+    """
+    newList = []
+    for item in l:
+        isplit = item.split(splitString)
+        for i in range(len(isplit)):
+            toAdd = isplit[i]
+            if i > 0:
+                toAdd = splitString + toAdd
+            newList.append(toAdd)
+    return newList
+
+def possibleAlbumNames(name):
+    """ Obtains a set of album names to try in order from a given album name
     
+    Normal name first. Then removes parenthetical statements (eg.
+    "(Remastered)", "(Deluxe)") and hyphenated statements (eg.
+    " - Remastered", " - Deluxe)
+    """
+    nameComponents = [name]
+    nameComponents = splitListOn(nameComponents, " (")
+    nameComponents = splitListOn(nameComponents, " - ")
+    possibleNames = []
+    for i in range(len(nameComponents), 0, -1):
+        possibleNames.append("".join(nameComponents[:i]))
+    return possibleNames
