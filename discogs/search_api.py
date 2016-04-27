@@ -5,6 +5,7 @@ import os
 import requests
 import sys
 import time
+import re
 
 # Imports the parent directory
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -51,6 +52,22 @@ https://api.discogs.com/artists/82294/releases
 
 '''
 
+artistNumber = re.compile(" \([0-9]+\)")
+
+def processArtistName(artistName):
+    # Processes the artist name to get around Discog's conventions (removes trailing numbers)
+    m = artistNumber.search(artistName)
+    if m:
+        artistName = artistName[:m.start()]
+    return artistName
+
+def artistAlbumSearch(artistName, albumName):
+    # Searches for both an artist and an album
+    url = baseURL + 'database/search?q='
+    url += 'artist=' + artistName
+    url += '&album=' + albumName
+    url += '&token=' + token
+    response = requests.get(url, headers=queryHeaders)
 
 def artistInfo(artistName):
 

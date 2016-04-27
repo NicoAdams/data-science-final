@@ -37,8 +37,8 @@ def splitListOn(l, splitString):
             newList.append(toAdd)
     return newList
 
-def possibleAlbumNames(name):
-    """ Obtains a set of album names to try in order from a given album name
+def possibleNames(name):
+    """ Obtains a set of possible names to try from a given track or album name
     
     Normal name first. Then removes parenthetical statements (eg.
     "(Remastered)", "(Deluxe)") and hyphenated statements (eg.
