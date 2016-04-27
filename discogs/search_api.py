@@ -164,6 +164,9 @@ def main():
         reader = csv.reader(csvfile)  # creates the reader object
         if has_header:
             next(reader)  # skip header row
+
+        jsondata = {}
+
         for row in reader:   # iterates the rows of the file in orders
             artist = row[2]
             album = row[3]
@@ -174,9 +177,13 @@ def main():
                 year = processAlbum(artist, album, maxDistance)
 
             uid = row[0]
-            jsondata = {"uid": uid, "year": year}
-            json.dump(jsondata, jsonfile)
+            ##jsondata = {"uid": uid, "year": year}
+            jsondata[str(uid)] = str(year)
+            ##json.dump(jsondata, jsonfile)
+
     finally:
+        json.dump(jsondata, jsonfile)
+
         jsonfile.close()
         csvfile.close()      # closing
 
