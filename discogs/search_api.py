@@ -49,6 +49,13 @@ info['results'][0].id => 82294
 get all albums by artist 82294:
 https://api.discogs.com/artists/82294/releases
 
+?q=shamir+ratchet&type=all
+
+https://api.discogs.com/database/search?q=shamir+ratchet&type=all&token=vXzDATLgZEbBAtEIeKGGPSmTdbifzmHCZYPaDAPD
+
+https://api.discogs.com/database/search?album=840451&token=vXzDATLgZEbBAtEIeKGGPSmTdbifzmHCZYPaDAPD
+
+
 
 '''
 
@@ -65,9 +72,59 @@ def artistAlbumSearch(artistName, albumName):
     # Searches for both an artist and an album
     url = baseURL + 'database/search?q='
     url += 'artist=' + artistName
-    url += '&album=' + albumName
+    url += '&releases=' + albumName
     url += '&token=' + token
     response = requests.get(url, headers=queryHeaders)
+
+def yearFromAristAndAlbum(artistName, albumName, maxDistance):
+    ''' https://api.discogs.com/database/search?q=shamir+ratchet&type=all&token=vXzDATLgZEbBAtEIeKGGPSmTdbifzmHCZYPaDAPD
+    '''
+    url = baseURL + 'database/search?q='
+    url += artistName + "+" + albumName
+    url += "&type=all"
+    url += '&token=' + token
+    response = requests.get(url, headers=queryHeaders)
+    #print url
+    #print response
+
+    json_info = json.JSONDecoder().decode(response.text)
+
+    if 'results' not in json_info:
+        return ''
+    results = json_info['results']
+    if len(results) == 0:
+        return ''
+    albumName = albumName.lower()
+    artistName = artistName.lower()
+    
+    for album in results:
+        title = album['title']
+        if title is "":
+            continue
+        title = title.split(' - ')
+        if len(title) == 1:
+            continue
+        tempArtist = processArtistName(title[0]).encode('utf-8').lower()
+        tempAlbum = title[1].encode('utf-8').lower()
+        #print "raw name = " + title[0]
+        #print "processed name = " + tempArtist
+        #print "album = " + tempAlbum
+
+        if levenshtein(tempArtist, artistName) >= maxDistance:
+            continue
+        if levenshtein(tempAlbum, albumName) >= maxDistance:
+            continue
+
+        if 'year' not in album:
+            continue
+        year = album['year']
+        if year is not "":
+            return int(year)
+
+    return None
+
+
+        
 
 def artistInfo(artistName):
 
@@ -83,7 +140,7 @@ def artistInfo(artistName):
     results = json_info['results']
     if len(results) == 0:
         return ''
-    
+
     return results
     ##artist_id = results[0]['id']
 
@@ -134,7 +191,7 @@ def processAlbum(artist_name, album_name, maxDistance):
     if info == '':
         print 'Artist ' + artist_name + ' not found!!'
         return
-
+    print 'Artist ' + artist_name
     artist_id = ''
     for artist_data in info:
         artist_title = artist_data['title'].encode('utf-8').lower()
@@ -174,7 +231,6 @@ def main():
         write info file
     '''
     csvfile = open(rfile, 'rb') # opens the csv file    
-    jsonfile = open(wfile, 'w') 
     try:
         has_header = csv.Sniffer().has_header(csvfile.read(1024))
         csvfile.seek(0)  # rewind
@@ -183,25 +239,38 @@ def main():
             next(reader)  # skip header row
 
         jsondata = {}
+        failedsearches = {}
 
         for row in reader:   # iterates the rows of the file in orders
             artist = row[2]
             album = row[3]
             print "searching for: " + artist + " -- " + album
+            uid = row[0]
             if (album, artist) in albumArtistPair:
                 year = albumArtistPair[(album, artist)]
             else:
-                year = processAlbum(artist, album, maxDistance)
+                year = yearFromAristAndAlbum(artist, album, maxDistance)
+                if year is None:
+                    year = ""
+                    print artist + ", " + album + ", uid: " + uid + " not found"
+                #year = processAlbum(artist, album, maxDistance)
 
-            uid = row[0]
             ##jsondata = {"uid": uid, "year": year}
             jsondata[str(uid)] = str(year)
+            if year is "":
+                failedsearches[str(uid)] =  {"artist": artist, "album": album}
+
             ##json.dump(jsondata, jsonfile)
 
     finally:
+        jsonfile = open(wfile, 'w') 
         json.dump(jsondata, jsonfile)
-
         jsonfile.close()
+
+        jsonfile = open("FAILED - " + wfile, 'w') 
+        json.dump(failedsearches, jsonfile)
+        jsonfile.close()
+
         csvfile.close()      # closing
 
     print str(year)
