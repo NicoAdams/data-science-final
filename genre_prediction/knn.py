@@ -69,6 +69,9 @@ def main():
 	t = Tokenizer()
 	features = extractFeatures(lyrics, t)
 	
+	print features.getrow(0)
+	return
+	
 	# Extracts labels
 	singleLabels = map(lambda g: g[0], genres)
 	multiLabels = vectorizeLabels(genres)
