@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 
 titles_path = ''
 lyrics_path = ''
-stopwords_path = ''
-affinity_path = ''
 
 def main():
 
