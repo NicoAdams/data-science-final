@@ -68,18 +68,23 @@ def main():
 	
 	# Calculate k-means
 	labelCount = np.unique(singleLabels).shape[0]
-	km = KMeans(n_clusters=labelCount, init='k-means++', max_iter=100, n_init=1, verbose=args.v)
-	km.fit(features)
-
-	# Prints statistics
-
-	print("Homogeneity: %0.3f" % metrics.homogeneity_score(singleLabels, km.labels_))
-	print("Completeness: %0.3f" % metrics.completeness_score(singleLabels, km.labels_))
-	print("V-measure: %0.3f" % metrics.v_measure_score(singleLabels, km.labels_))
-	print("Adjusted Rand-Index: %.3f"
-	      % metrics.adjusted_rand_score(singleLabels, km.labels_))
-	print("Silhouette Coefficient: %0.3f"
-	      % metrics.silhouette_score(features, km.labels_, sample_size=1000))
+	classifiers = []
+	for i in range(5):
+		print "Classifier:", i
+		
+		km = KMeans(n_clusters=labelCount, init='k-means++', max_iter=1000, n_init=1, verbose=args.v)
+		classifiers.append(km)
+		km.fit(features)
+		
+		# Prints statistics
+		
+		print("Homogeneity: %0.3f" % metrics.homogeneity_score(singleLabels, km.labels_))
+		print("Completeness: %0.3f" % metrics.completeness_score(singleLabels, km.labels_))
+		print("V-measure: %0.3f" % metrics.v_measure_score(singleLabels, km.labels_))
+		print("Adjusted Rand-Index: %.3f"
+		      % metrics.adjusted_rand_score(singleLabels, km.labels_))
+		print("Silhouette Coefficient: %0.3f"
+		      % metrics.silhouette_score(features, km.labels_, sample_size=1000))
 	
 	
 if __name__ == "__main__":

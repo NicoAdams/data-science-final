@@ -6,7 +6,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import BernoulliNB
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import cross_validation
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -24,8 +24,8 @@ def joinDicts(d1, d2):
 			join[1].append(d2[k])
 	return join
 
-def extractFeatures(lyrics, tokenizer):
-	v = CountVectorizer(binary=True, lowercase=True, tokenizer=tokenizer)
+def extractFeatures(lyrics, tokenizer, binary=True):
+	v = CountVectorizer(binary=binary, lowercase=True, tokenizer=tokenizer)
 	return v.fit_transform(lyrics)
 	
 def vectorizeLabels(genres):
@@ -36,7 +36,7 @@ def parseArgs():
 	parser.add_argument('-n', default=10, help='Number of neighbors to train the classifier on')
 	parser.add_argument('-l', default="../data/lyrics.txt", help='Path to lyrics data')
 	parser.add_argument('-g', default="../data/genres.txt", help='Path to the genres data')
-	parser.add_argument('-c', default=5, help='Number of folds in the cross-validation')
+	parser.add_argument('-c', default=4, help='Number of folds in the cross-validation')
 	parser.add_argument('-s', default="../util_data/stopwords.txt", help='Path to stopwords file')
 	return parser.parse_args()
 
@@ -49,6 +49,14 @@ def loadStopwords(filename):
 def main():
 	args = parseArgs()
 	
+########################################
+	# Features settings 
+	stemWords = False
+	binary = True
+	removeStopwords = False
+
+########################################
+
 	# Labels = first listed genres
 	lyricsFile = args.l
 	genresFile = args.g
@@ -73,11 +81,12 @@ def main():
 	(lyrics, genres) = joinDicts(lyrics, genres)
 	numSongs = len(lyrics)
 	
-	# Extracts features (lyrics) 
-	stemWords = False
+	# Extracts features (lyrics)
 	t = Tokenizer(stem=stemWords)
-	t.addStopwords(loadStopwords(stopwordsFile))
-	features = extractFeatures(lyrics, t)
+	if removeStopwords:
+		t.addStopwords(loadStopwords(stopwordsFile))
+	
+	features = extractFeatures(lyrics, t, binary=binary)
 	
 	# Extracts labels
 	singleLabels = map(lambda g: g[0], genres)
@@ -87,48 +96,27 @@ def main():
 	randomSingleLabels = list(singleLabels)
 	random.shuffle(randomSingleLabels)
 	
-	randomMultiLabels = list(multiLabels)
-	random.shuffle(randomMultiLabels)
-	randomMultiLabels = vectorizeLabels(randomMultiLabels)
-	
 	# Creates the classifier
-	knn = KNeighborsClassifier(neighbors=n)
+	nb = BernoulliNB(binarize=None)
 		
 	# Cross-validation: Single Labels
 	singleGenreScores = cross_validation.cross_val_score( \
-		knn, features, singleLabels, cv=c, scoring='accuracy' \
+		nb, features, singleLabels, cv=c, scoring='accuracy' \
 	)
 	
 	# Cross-validation: Random single labels
 	singleGenreRandomScores = cross_validation.cross_val_score( \
-		knn, features, randomSingleLabels, cv=c, scoring='accuracy' \
+		nb, features, randomSingleLabels, cv=c, scoring='accuracy' \
 	)
 
-	# Cross-validation: Multiple Labels
-	multiGenreScores = cross_validation.cross_val_score( \
-		knn, features, multiLabels, cv=c, scoring='accuracy' \
-	)
-	
-	# Cross-validation: Random multiple Labels
-	multiGenreRandomScores = cross_validation.cross_val_score( \
-		knn, features, randomMultiLabels, cv=c, scoring='accuracy' \
-	)
-	
 	# Prints statistics
 	print "Number of songs:", numSongs
-	print "-- Single genre model --"
+	print "-- Single-genre model --"
 	print "Mean:   ", singleGenreScores.mean()
 	print "Std dev:", singleGenreScores.std()
-	print "-- Multi-genre model --"
-	print "Mean:   ", multiGenreScores.mean()
-	print "Std dev:", multiGenreScores.std()
-	print "-- Random single genre model --"
+	print "-- Random genre model --"
 	print "Mean:   ", singleGenreRandomScores.mean()
 	print "Std dev:", singleGenreRandomScores.std()
-	print "-- Random multi-genre model --"
-	print "Mean:   ", multiGenreRandomScores.mean()
-	print "Std dev:", multiGenreRandomScores.std()
-	
 	
 if __name__ == "__main__":
 	main()
