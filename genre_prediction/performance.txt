@@ -1,10 +1,16 @@
+Count schemes
+-------------
+Binary: 1 if word is present, 0 if absent
+Count: Number of occurrences of a word
+Log count: log(Count + 1)
+
 Performance of classifiers
 --------------------------
 
 Setting:
 actual version : randomized genres version
 
--- Naive Bayes --
+--- Naive Bayes ---
 
 Stemming, binary (with/without stopwords):
 0.26 : 0.23
@@ -12,7 +18,10 @@ Stemming, binary (with/without stopwords):
 No stemming, binary (with/without stopwords):
 0.26 : 0.24
 
-
-
 Stemming, counts:
 0.004 : 0.004
+
+--- K Nearest Neighbors ---
+
+Stemming, binary, removes stopwords:
+0.07 : 0.12
