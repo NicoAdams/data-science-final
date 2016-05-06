@@ -1,0 +1,18 @@
+Performance of classifiers
+--------------------------
+
+Setting:
+actual version : randomized genres version
+
+-- Naive Bayes --
+
+Stemming, binary (with/without stopwords):
+0.26 : 0.23
+
+No stemming, binary (with/without stopwords):
+0.26 : 0.24
+
+
+
+Stemming, counts:
+0.004 : 0.004
