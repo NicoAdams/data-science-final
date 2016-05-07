@@ -30,8 +30,8 @@ class FeatureExtractor(object):
     def __filter_stopwords(self, words):
         return [word.lower() for word in words if word.lower() not in self.__stopwords] if self.__stopwords else words
 
-    def __split(self, input):
-        words = self.__filter_stopwords(self.__r.split(input))
+    def __split(self, inputStr):
+        words = self.__filter_stopwords(self.__r.split(inputStr))
         return [word for word in words if word != '']
 
     def __get_sentiment(self, word):
@@ -46,8 +46,8 @@ class FeatureExtractor(object):
                 word_count_pairs[word] = 1
         return word_count_pairs.items()
 
-    def __sort_by_sent(self, input, binary, reverse=False):
-        words = self.__split(input)
+    def __sort_by_sent(self, inputStr, binary, reverse=False):
+        words = self.__split(inputStr)
         if binary:
             word_sent_pairs = [(word, self.__get_sentiment(word)) for word in set(words)]
             sorted_words = sorted(word_sent_pairs, key=lambda (item, sent): sent, reverse=True)
@@ -63,18 +63,16 @@ class FeatureExtractor(object):
         unflattened_list = [[word for i in range(count)] for word, count in word_count_pairs]
         return [word for sublist in unflattened_list for word in sublist]
 
-    def extract_all(self, input, binary=True):
+    def extract_all(self, inputStr, binary=True):
         '''
         Makes a feature vector using all words from the given string.
-        :param input: an input string
+        :param inputStr: an input string
         :param binary: option to make binary feature vector (True) or count feature vector (False)
         :return: Feature vector made from all words in the input
         '''
-        print input
-        v = CountVectorizer(binary=True, lowercase=True, tokenizer=self.__tokenizer)
-        return v.fit_transform(input)
+        return inputStr
 
-    def extract_top_n(self, input, n, binary=True):
+    def extract_top_n(self, inputStr, n, binary=True):
         '''
         Makes a feature vector using the top n sentiment words from the given string.
         :param input: an input string
@@ -85,17 +83,17 @@ class FeatureExtractor(object):
         assert self.__sentiments is not None
         assert n >= 1
 
-        sorted_words = self.__sort_by_sent(input, binary, reverse=True)
+        sorted_words = self.__sort_by_sent(inputStr, binary, reverse=True)
         if len(sorted_words) >= n:
             words = sorted_words[:n] if binary else self.__repeat_words(sorted_words[:n])
         else:
             words = sorted_words if binary else self.__repeat_words(sorted_words)
         return self.extract_all(" ".join(words), binary=binary)
 
-    def extract_bottom_n(self, input, n, binary=True):
+    def extract_bottom_n(self, inputStr, n, binary=True):
         '''
         Makes a feature vector using the bottom n sentiment words from the given string
-        :param input: an input string
+        :param inputStr: an input string
         :param n: the number of top words to keep
         :param binary: option to make a binary feature vector (True) or count feature vector (False)
         :return: feature vector made from the bottom n words in the input
@@ -103,17 +101,17 @@ class FeatureExtractor(object):
         assert self.__sentiments is not None
         assert n >= 1
 
-        sorted_words = self.__sort_by_sent(input, binary, reverse=False)
+        sorted_words = self.__sort_by_sent(inputStr, binary, reverse=False)
         if len(sorted_words) >= n:
             words = sorted_words[:n] if binary else self.__repeat_words(sorted_words[:n])
         else:
             words = sorted_words if binary else self.__repeat_words(sorted_words)
         return self.extract_all(" ".join(words), binary=binary)
 
-    def extract_top_n_bottom_m(self, input, n, m, binary=True):
+    def extract_top_n_bottom_m(self, inputStr, n, m, binary=True):
         '''
         Makes a feature vector using the top n and bottom m words from the given string
-        :param input: an input string
+        :param inputStr: an input string
         :param n: the number of top words to keep
         :param m: the number of bottom words to keep
         :param binary: option to make a binary feature vector (True) or count feature vector (False)
@@ -123,7 +121,7 @@ class FeatureExtractor(object):
         assert self.__sentiments is not None
         assert n >= 1
         assert m >= 1
-        sorted_words = self.__sort_by_sent(input, binary, reverse=True)
+        sorted_words = self.__sort_by_sent(inputStr, binary, reverse=True)
         if len(sorted_words) >= n + m:
             top_words = sorted_words[:n] if binary else self.__repeat_words(sorted_words[:n])
             bottom_words = sorted_words[-m:] if binary else self.__repeat_words(sorted_words[-m:])
