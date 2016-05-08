@@ -1,12 +1,13 @@
 from sklearn.feature_extraction.text import CountVectorizer
 import csv
 import re
+import random
 
 class FeatureExtractor(object):
-    def __init__(self, tokenizer, stopwordsfilename=None, sentimentfilename=None):
+    def __init__(self, tokenizer, stopwordsfilename=None, sentimentfilename=None, randomizeSentiments=False):
         self.set_tokenizer(tokenizer)
         self.set_stopwords(stopwordsfilename)
-        self.set_sentiment(sentimentfilename)
+        self.set_sentiment(sentimentfilename, randomizeSentiments=randomizeSentiments)
         self.__r = re.compile(r'\W+')
 
     def set_tokenizer(self, tokenizer):
@@ -18,12 +19,22 @@ class FeatureExtractor(object):
                 self.__stopwords = [word.lower().strip() for word in f]
         else:
             self.__stopwords = None
-
-    def set_sentiment(self, sentimentfilename):
+    
+    def __shuffle_sentiment(self):
+        words = self.__sentiments.keys()
+        randWords = list(words)
+        random.shuffle(randWords)
+        self.__sentiments = {randWords[i]: self.__sentiments[words[i]] for i in xrange(len(words))}    
+    
+    def set_sentiment(self, sentimentfilename, randomizeSentiments=False):
         if sentimentfilename is not None:
             with open(sentimentfilename, 'r') as f:
                 reader = csv.reader(f, delimiter='\t')
                 self.__sentiments = {word.lower(): int(sentiment) for word, sentiment in reader}
+                
+                # Randomizes the sentiment associations
+                if randomizeSentiments:
+                    self.__shuffle_sentiment()
         else:
             self.__sentiments = None
 
