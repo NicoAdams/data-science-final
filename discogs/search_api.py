@@ -59,14 +59,35 @@ https://api.discogs.com/database/search?album=840451&token=vXzDATLgZEbBAtEIeKGGP
 
 '''
 
-artistNumber = re.compile(" \([0-9]+\)")
-
+artistNumber = re.compile(" \([0-9]+\)", re.UNICODE)
 def processArtistName(artistName):
     # Processes the artist name to get around Discog's conventions (removes trailing numbers)
-    m = artistNumber.search(artistName)
-    if m:
-        artistName = artistName[:m.start()]
-    return artistName
+    try:
+        artistName = re.sub(artistNumber, '', artistName).strip()
+    finally:
+        return artistName
+
+trailingParens = re.compile(" \(([^\)]+)\)", re.UNICODE)
+def stripParens(albumName):
+    # Processes the album name to remove trailing "(...)"
+    try:
+        albumName = re.sub(trailingParens, '', albumName)
+    finally:
+        return albumName
+
+trailingBrackets = re.compile(" \[([^\)]+)\]", re.UNICODE)
+def stripBrackets(albumName):
+    # Processes the album name to remove trailing "[...]"
+    try:
+        albumName = re.sub(trailingBrackets, '', albumName)
+    finally:
+        return albumName
+
+def stripAfterDash(albumName):
+    offset = albumName.find('-')
+    if offset:
+        albumName = albumName[:offset]
+    return albumName.strip()
 
 def artistAlbumSearch(artistName, albumName):
     # Searches for both an artist and an album
@@ -76,13 +97,88 @@ def artistAlbumSearch(artistName, albumName):
     url += '&token=' + token
     response = requests.get(url, headers=queryHeaders)
 
+def searchAlbumInfo(results, albumName, artistName, maxDistance, albumProcessor):
+    #print results
+
+    originalAlbumName = albumName.encode('utf-8')
+
+    albumName = albumName.lower()
+    artistName = artistName.lower()
+
+    if albumProcessor != None:
+        albumName = albumProcessor(albumName)
+
+    for album in results:
+        #print album
+        title = album['title'].encode('utf-8')
+        if title is "":
+            continue
+        title = title.split(' - ')
+        if len(title) == 1:
+            continue
+        tempArtist = processArtistName(title[0]).lower()
+        tempAlbum = title[1].lower()
+
+        '''
+        print "full name = " + album['title']
+        print "full name = " + album['title']
+        print "split name = " + str(album['title'].split(' - '))
+        print "raw name = " + title[0]
+        print "processed name = " + tempArtist
+        print "album = " + tempAlbum
+        print "levenshtein('" + tempArtist + "', '" + artistName + "') = " + str(levenshtein(tempArtist, artistName))
+        print "levenshtein('" + tempAlbum + "', '" + albumName + "') = " + str(levenshtein(tempAlbum, albumName))
+        '''
+        artist = tempArtist
+        if levenshtein(tempArtist, artistName) >= maxDistance:
+            continue
+
+        if levenshtein(tempAlbum, albumName) >= maxDistance:
+            continue
+
+        if 'year' not in album:
+            continue
+        year = album['year'].encode('utf-8')
+        if year is not "":
+            if albumProcessor != None:
+                print "   - selected '" + tempAlbum + "' when searching for '" + originalAlbumName + "'"
+            return int(year)
+
+    return None
+
+def processAlbumList(results, albumName, artistName, maxDistance):
+    
+    year = searchAlbumInfo(results, albumName, artistName, maxDistance, None)
+    if year != None:
+        return year
+
+    # no match, look through the results again ignoring "(...)" after the album name
+    # eg. One Of These Nights (Remastered)
+    #print "No match, trying again with relaxed album name"
+    year = searchAlbumInfo(results, albumName, artistName, maxDistance, stripParens)
+    if year != None:
+        return year
+
+    # no match, look through the results again ignoring "[...]" after the album name
+    # eg. R&G (Rhythm & Gangsta): The Masterpiece [Explicit Version]
+    #print "No match, trying again with relaxed album name"
+    year = searchAlbumInfo(results, albumName, artistName, maxDistance, stripBrackets)
+    if year != None:
+        return year
+
+    # no match, look through the results again ignoring everything after the first "-" in the album 
+    # this is useful for album names like Weezer's "Pinkerton - Deluxe Edition"
+    #print "No match, trying again with relaxed album name"
+    year = searchAlbumInfo(results, albumName, artistName, maxDistance, stripAfterDash)
+
+    return year
+
 def yearFromAristAndAlbum(artistName, albumName, maxDistance):
-    ''' https://api.discogs.com/database/search?q=shamir+ratchet&type=all&token=vXzDATLgZEbBAtEIeKGGPSmTdbifzmHCZYPaDAPD
-    '''
     url = baseURL + 'database/search?q='
     url += artistName + "+" + albumName
     url += "&type=all"
     url += '&token=' + token
+    url += '&per_page=100'
     response = requests.get(url, headers=queryHeaders)
     #print url
     #print response
@@ -94,37 +190,65 @@ def yearFromAristAndAlbum(artistName, albumName, maxDistance):
     results = json_info['results']
     if len(results) == 0:
         return ''
-    albumName = albumName.lower()
-    artistName = artistName.lower()
     
-    for album in results:
-        title = album['title']
-        if title is "":
-            continue
-        title = title.split(' - ')
-        if len(title) == 1:
-            continue
-        tempArtist = processArtistName(title[0]).encode('utf-8').lower()
-        tempAlbum = title[1].encode('utf-8').lower()
-        #print "raw name = " + title[0]
-        #print "processed name = " + tempArtist
-        #print "album = " + tempAlbum
+    year = processAlbumList(results, albumName, artistName, maxDistance)
 
-        if levenshtein(tempArtist, artistName) >= maxDistance:
-            continue
-        if levenshtein(tempAlbum, albumName) >= maxDistance:
-            continue
+    # don't call more than 2 times per second
+    time.sleep(1/2)
 
-        if 'year' not in album:
-            continue
-        year = album['year']
-        if year is not "":
-            return int(year)
+    return year
 
-    return None
+def yearFromAlbumNameOnly(artistName, albumName, maxDistance):
+    url = baseURL + 'database/search?q='
+    url += albumName
+    url += "&type=all"
+    url += '&token=' + token
+    url += '&per_page=100'
+    response = requests.get(url, headers=queryHeaders)
 
+    #print url
+    #print response
 
-        
+    json_info = json.JSONDecoder().decode(response.text)
+
+    if 'results' not in json_info:
+        return ''
+    results = json_info['results']
+    if len(results) == 0:
+        return ''
+
+    year = processAlbumList(results, albumName, artistName, maxDistance)
+
+    # don't call more than 2 times per second
+    time.sleep(1/2)
+
+    return year
+
+def yearFromArtistNameOnly(artistName, albumName, maxDistance):
+    url = baseURL + 'database/search?q='
+    url += artistName
+    url += "&type=all"
+    url += '&token=' + token
+    url += '&per_page=100'
+    response = requests.get(url, headers=queryHeaders)
+
+    #print "No match, searching by album name only"
+    #print response
+
+    json_info = json.JSONDecoder().decode(response.text)
+
+    if 'results' not in json_info:
+        return ''
+    results = json_info['results']
+    if len(results) == 0:
+        return ''
+
+    year = processAlbumList(results, albumName, artistName, maxDistance)
+
+    # don't call more than 2 times per second
+    time.sleep(1/2)
+
+    return year
 
 def artistInfo(artistName):
 
@@ -191,7 +315,7 @@ def processAlbum(artist_name, album_name, maxDistance):
     if info == '':
         print 'Artist ' + artist_name + ' not found!!'
         return
-    print 'Artist ' + artist_name
+
     artist_id = ''
     for artist_data in info:
         artist_title = artist_data['title'].encode('utf-8').lower()
@@ -204,78 +328,79 @@ def processAlbum(artist_name, album_name, maxDistance):
                 break
     return year
 
+def albumYearForWriting(uid, year):
+    return '"{0}" : "{1}",'.format(uid.encode('utf-8'), str(year).encode('utf-8'))
+
 def main():
     if len(sys.argv) < 3:
-        print 'Usage: python ' + sys.argv[0] + 'artist album [maxDistance]'
+        print 'Usage: python ' + sys.argv[0] + ' album_csv_file results_file [maxDistance]'
         return
         
-    rfile = sys.argv[1]
-    wfile = sys.argv[2]
+    dataFile = sys.argv[1]
+    resultsFile = sys.argv[2]
 
     if len(sys.argv) >= 4:
         maxDistance = int(sys.argv[3])
     else:
         maxDistance = 0
 
-    '''
-    open csv file
-    for line in file:
-        artist = line[xx]
-        album = line[yyy]
-        if (album, artist) in albumArtistPair:
-            year = albumArtistPair[(album, artist)]
-        else:
-            look up year in discogs
+    jsondata = {}
 
-        uuid = line[xx]
-        write info file
-    '''
-    csvfile = open(rfile, 'rb') # opens the csv file    
+    failFileName = resultsFile.split('.')[0]
+    failedSearchFile = open("FAILED - " + failFileName + ".csv", 'a') 
+    failureWriter = csv.writer(failedSearchFile)
+
+    csvfile = open(dataFile, 'rb') # opens the csv file    
     try:
-        has_header = csv.Sniffer().has_header(csvfile.read(1024))
-        csvfile.seek(0)  # rewind
-        reader = csv.reader(csvfile)  # creates the reader object
-        if has_header:
-            next(reader)  # skip header row
-
-        jsondata = {}
-        failedsearches = {}
-
-        for row in reader:   # iterates the rows of the file in orders
-            artist = row[2]
-            album = row[3]
+        reader = csv.reader(csvfile)
+        reader.next()
+        for row in reader:
+            artist = unicode(row[2], 'utf-8')
+            album = unicode(row[3], 'utf-8')
+            uid = unicode(row[0], 'utf-8')
             print "searching for: " + artist + " -- " + album
-            uid = row[0]
+
             if (album, artist) in albumArtistPair:
                 year = albumArtistPair[(album, artist)]
             else:
                 year = yearFromAristAndAlbum(artist, album, maxDistance)
+
+                if year is None:
+                    year = yearFromAlbumNameOnly(artist, album, maxDistance)
+
+                if year is None:
+                    shortAlbumName = stripParens(album)
+                    year = yearFromAlbumNameOnly(artist, shortAlbumName, maxDistance)
+
+                if year is None:
+                    shortAlbumName = stripAfterDash(album)
+                    year = yearFromAlbumNameOnly(artist, shortAlbumName, maxDistance)
+
+                if year is None:
+                    # no match, try the "artist name" only up to a comma, eg. "Snoop Dogg, Pharrell Williams"
+                    splitArtist = artist.split(',')
+                    if len(splitArtist) > 1:
+                        year = yearFromAristAndAlbum(splitArtist[0], album, maxDistance)
+
                 if year is None:
                     year = ""
-                    print artist + ", " + album + ", uid: " + uid + " not found"
-                #year = processAlbum(artist, album, maxDistance)
+                    print "Not Found: " + artist + ", " + album + ", uid: " + uid
 
-            ##jsondata = {"uid": uid, "year": year}
             jsondata[str(uid)] = str(year)
-            if year is "":
-                failedsearches[str(uid)] =  {"artist": artist, "album": album}
 
-            ##json.dump(jsondata, jsonfile)
+            if year is "":
+                failureWriter.writerow(row)
 
     finally:
         jsonfile = open(wfile, 'w') 
         json.dump(jsondata, jsonfile)
         jsonfile.close()
 
-        jsonfile = open("FAILED - " + wfile, 'w') 
-        json.dump(failedsearches, jsonfile)
+        jsonfile.write("}\n");
         jsonfile.close()
+        failedSearchFile.close()
 
         csvfile.close()      # closing
-
-    print str(year)
-
-
 
 if __name__ == '__main__':
     main()
