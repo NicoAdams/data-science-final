@@ -22,9 +22,15 @@ def main():
     title_sentiment_json = json.loads(open(title_sentiment_filename, 'r').read())
     genre_json = json.loads(open(genre_filename, 'r').read())
 
+    title_sentiments = [val for key, val in title_sentiment_json.items()]
+    n, b, p = plt.hist(title_sentiments, 100, normed=True)
+    plt.show()
+    exit(0)
+
     data = [(val, title_sentiment_json[key], map(lambda genre: str(genre).lower(), genre_json[key]))
             for key, val in lyric_sentiment_json.items()
             if key in title_sentiment_json and key in genre_json]
+
     genres = ['death metal', 'country']
     
     handles = [plot_genre(data, genre) for genre in genres]
