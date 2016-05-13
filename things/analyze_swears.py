@@ -27,6 +27,7 @@ def parseArgs():
 def makeSong(title, artist, album, genres, duration, year):
     return {"title": title, "artist": artist, "album": album, "genres": genres, "duration": duration, "year": year}
 
+# dont want to pay attention 
 def stripStopWords(string, stopwords):
     result = []
     for word in string.split():
