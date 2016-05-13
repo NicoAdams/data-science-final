@@ -1,5 +1,11 @@
 import lfm_requests, sys
 
+""" Command line tool to acquire song tags from Last.FM. Prints the top N tags for the song
+
+To use, run:
+	python lfm_get_tags.py trackName artistName [numTags]
+"""
+
 def main():
 	if len(sys.argv) < 3:
 		print "Usage: python lfm_get_tags.py trackName artistName [numTags]"

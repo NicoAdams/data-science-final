@@ -1,4 +1,11 @@
 
+
+##*******************
+##The way that this code was used was that it was added to/the outputs were commented out/overwritten after it 
+##was run and the speciic run's output was made into a saved file, so you will find code/variables not used
+##in the specific iteration submitted here
+##*******************
+
 # Allows importing from the parent directory
 import inspect, os, sys
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -20,6 +27,7 @@ def parseArgs():
     parser.add_argument('-max', default=2, help='Maximum levenshtein distance')
     return parser.parse_args()
 
+#makes it so that words that actually mean (eg fucking/fuckin) the same thing are counted as the same word
 def synonym(swear):
     if swear in ["motherfucker", "motherfuckers", "motherfucking"]:
         return "motherfucker"
@@ -32,7 +40,7 @@ def synonym(swear):
     return swear
 
 
-
+#does all the counting etc -- more info below
 def main():
     args = parseArgs()
 
@@ -44,6 +52,8 @@ def main():
         song = songInfo[songId]
 
         year = song["year"].encode('utf-8')
+        #if it's seen the year associated with a song before, just add all the info to that year, otherwise it creates
+        
         try:
             yearInfo = summary[year]
         except Exception as e:
