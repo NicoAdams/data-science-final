@@ -124,7 +124,6 @@ def generateGenreData(songsFile, genresFile):
 	songsFileData = json.load(open(songsFile))
 	
 	genreData = json.load(open(genresFile))
-	# try:
 	print "Beginning"
 	count = 0
 	try:
