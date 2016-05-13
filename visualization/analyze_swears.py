@@ -1,4 +1,3 @@
-
 # Allows importing from the parent directory
 import inspect, os, sys
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -27,7 +26,7 @@ def parseArgs():
 def makeSong(title, artist, album, genres, duration, year):
     return {"title": title, "artist": artist, "album": album, "genres": genres, "duration": duration, "year": year}
 
-# dont want to pay attention 
+# Dont want to pay attention to stop words when looking at word count etc. 
 def stripStopWords(string, stopwords):
     result = []
     for word in string.split():
@@ -39,6 +38,8 @@ def stripStopWords(string, stopwords):
 
     return result
 
+# Build of dictionary by combining the information in the song list scraped from Spotify with the
+# genre information from LastFM and the album release year from discogs.
 def generateSongInfo(csvFile, genresFile, yearsFile):
     genres = json.load(open(genresFile))
     years = json.load(open(yearsFile))
@@ -89,6 +90,8 @@ def generateSongInfo(csvFile, genresFile, yearsFile):
     return songs
 
 
+# Combine the song information dictionary with a the lyrics from chartlyrics.com. After stripping
+# stop words, add the total number of words in the song and the list of all swear words
 def analyzeLyrics(songInfo, swearFile, lyricsFile, stopWordFile):
 
     with open(swearFile, 'r') as swearFile:
@@ -117,6 +120,9 @@ def analyzeLyrics(songInfo, swearFile, lyricsFile, stopWordFile):
             if word in swears:
                 lyricsSwears.append(word)
 
+
+            # levenshtein disatance wasnt used for swear words because a lot of them are so short that 
+            # doing so produces a lot of false positives, even with a distance of only one (eg shit shot shut)    
             '''
             for swear in swears:
                 if levenshtein(word, swear) <= args.max:
@@ -131,7 +137,7 @@ def analyzeLyrics(songInfo, swearFile, lyricsFile, stopWordFile):
 
     return results
 
-
+# Generate a dictionary of song information and write it to a JSON file.
 def main():
     args = parseArgs()
     
