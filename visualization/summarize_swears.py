@@ -35,8 +35,13 @@ def synonym(swear):
         return "fuck"
     if swear in ["bitch", "bitches"]:
         return "motherfucker"
+
+    #these words are commented out in the html vizualization it is important to know that they are in the songs, 
+    #but we decided we would rather not talk about them at the poster fair 
     if swear in ["niggaz", "nigga", "niggas"]:
         return "nigga"
+
+    #if it is not a synonym then it just returns the original word
     return swear
 
 
@@ -52,8 +57,7 @@ def main():
         song = songInfo[songId]
 
         year = song["year"].encode('utf-8')
-        #if it's seen the year associated with a song before, just add all the info to that year, otherwise it creates
-        
+        # If it's seen the year associated with a song before, just add all the info to that year, otherwise it creates a new year and adds all the info to that
         try:
             yearInfo = summary[year]
         except Exception as e:
@@ -62,19 +66,23 @@ def main():
 
         ##print song
         for swear in song["swear-words"]:
+            # looks through all the synonyms first
             swear = synonym(swear)
             if swear not in allSwears:
+                # Makes a list of the swear words that actually do appear in any of our data
                 allSwears.append(swear.encode('utf-8'))
             yearInfo["swear-words"].append(swear.encode('utf-8'))
 
             try:
                 yearInfo["frequencies"][swear] += 1
             except Exception as e:
-                yearInfo["frequencies"][swear] = 0
+                yearInfo["frequencies"][swear] = 1
 
+            #this was because there was an odd spike in this year (with the word lust), so I was trying to figure out what it was
             if year == "1963":
                 print swear
 
+        #makes a list of the genres encountered in the songs
         for genre in song["genres"]:
             if genre not in yearInfo["genres"]:
                 yearInfo["genres"].append(genre)
@@ -116,11 +124,15 @@ def main():
         print "  genres = " + str(yearInfo["genres"])
         '''
 
+    # does exactly what it says, it sums the swears it encounters, and gives them labels -- sets up the array
     sumsOfSwears = {swear : 0 for swear in allSwears }
     for swear in swearsByYear:
+        #I really want the swears by which they happen in 
         sumsOfSwears[swear] += sum(swearsByYear[swear][1:])
 
     counter = 0
+    # It prints them out in order of the most used swear to the least used, so I can viz only the swears that show up the most frequently 
+    # ie the ones that are interesting to look at
     for swear in sorted(sumsOfSwears, key=sumsOfSwears.get, reverse=True):
         #print swear + ": " + str(sumsOfSwears[swear])
         print str(swearsByYear[swear]) + ","
